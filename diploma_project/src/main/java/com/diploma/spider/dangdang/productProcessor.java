@@ -1,5 +1,6 @@
 package com.diploma.spider.dangdang;
 import com.diploma.mysql.dao.ProductDetailResitory;
+import com.diploma.mysql.model.Category;
 import com.diploma.mysql.model.HistoryPrice;
 import com.diploma.mysql.model.ProductDetail;
 import com.diploma.service.CatagoryService;
@@ -25,17 +26,15 @@ public class productProcessor implements PageProcessor{
     public void process(Page page) {
         ApplicationContext applicationContext= new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
         ProductDetailResitory productDetailResitory=(ProductDetailResitory)applicationContext.getBean("productDetailResitory");
-        CatagoryService catagoryService=(CatagoryService) applicationContext.getBean("catagoryServiceImpl");
+
         Html html=page.getHtml();
         String url=page.getRequest().getUrl();
         String productId="";
 
-
-
         if (false){
-            price(html,productId,page);
+            price(html,productId);
         }else{
-            saveProduct(html,page,url);
+            saveProduct(html,page,url,applicationContext);
         }
     }
 
@@ -45,11 +44,11 @@ public class productProcessor implements PageProcessor{
     }
 
     public static void main(String args[]){
-        Spider.create(new productProcessor()).addPipeline(new MysqlPipeline()).addUrl("http://product.dangdang.com/25230126.html").thread(5).run();
+        Spider.create(new productProcessor()).addPipeline(new MysqlPipeline()).addUrl("http://product.dangdang.com/24026282.html").thread(5).run();
     }
 
     //url已经爬取过只爬取历史价格信息
-    public void price(Html html,String productId,Page page){
+    public HistoryPrice price(Html html,String productId){
         List<String> price=html.xpath("//div[@class=\"product_wrapper\"]/div[@class=\"product_main clearfix\"]/div[@class=\"show_info\"]" +
                 "/div[@class=\"sale_box clearfix\"]/div[@id=\"product_info\"]/div[@class=\"price_info clearfix\"]/div[@id=\"pc-price\"]" +
                 "/div[@class=\"price_d\"]/p[@id=\"dd-price\"]/text()").all();
@@ -58,10 +57,13 @@ public class productProcessor implements PageProcessor{
         historyPrice.setPriceId(UUIDUtil.getUUID());
         historyPrice.setPrice(price.get(0));
         historyPrice.setCrateTime(new Date());
-        page.putField("historyPrice",historyPrice);
+        return historyPrice;
     }
     //发现未爬取过的url  保存全部商品信息
-    public void saveProduct(Html html,Page page,String url){
+    public void saveProduct(Html html,Page page,String url,ApplicationContext applicationContext){
+
+        CatagoryService catagoryService=(CatagoryService) applicationContext.getBean("catagoryServiceImpl");
+
         List<String> price=html.xpath("//div[@class=\"product_wrapper\"]/div[@class=\"product_main clearfix\"]/div[@class=\"show_info\"]" +
                 "/div[@class=\"sale_box clearfix\"]/div[@id=\"product_info\"]/div[@class=\"price_info clearfix\"]/div[@id=\"pc-price\"]" +
                 "/div[@class=\"price_d\"]/p[@id=\"dd-price\"]/text()").all();
@@ -93,11 +95,15 @@ public class productProcessor implements PageProcessor{
         productDetail.setProductName(title.get(0));
         productDetail.setDescripton(description.get(0));
         productDetail.setOrignPlace(price.get(0));
-//        productDetail.setCatagoryId(catalog1.get(0));
         productDetail.setImageurl(picUrl.get(0));
         productDetail.setUrl(url);
-
-        page.putField("productDetail",productDetail);
-        page.putField("catagory",catalog1);
+        for(String cata:catalog1){
+            List<Category> categorys=catagoryService.findCatagoryByName(cata);
+            if (!categorys.isEmpty()){
+                productDetail.setCatagoryId(categorys.get(0).getId());
+            }
+        }
+        ProductDetailResitory productDetailResitory=(ProductDetailResitory)applicationContext.getBean("productDetailResitory");
+        productDetailResitory.save(productDetail);
     }
 }

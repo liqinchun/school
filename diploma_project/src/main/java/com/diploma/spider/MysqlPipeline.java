@@ -26,27 +26,27 @@ public class MysqlPipeline implements Pipeline{
 
     @Override
     public void process(ResultItems resultItems, Task task) {
-        ApplicationContext applicationContext= new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
-        ProductDetailResitory productDetailResitory=(ProductDetailResitory)applicationContext.getBean("productDetailResitory");
-        CatagoryService catagoryService=(CatagoryService) applicationContext.getBean("catagoryServiceImpl");
-
-        ProductDetail productDetail=null;
-        String categoryId=null;
-        for (Map.Entry<String, Object> entry:resultItems.getAll().entrySet()){
-            if (entry.getKey().equals("productDetail")){
-                productDetail=(ProductDetail) entry.getValue();
-            }else if(entry.getKey().equals("catagory")){
-                List<String> cataList=(List<String>) entry.getValue();
-                for(String cata:cataList){
-                    List<Category> categorys=catagoryService.findCatagoryByName(cata);
-                    if (!categorys.isEmpty()){
-                        categoryId=categorys.get(0).getId();
-                    }
-                }
-                productDetail.setCatagoryId(categoryId);
-            }
-        }
-        productDetailResitory.save(productDetail);
+//        ApplicationContext applicationContext= new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
+//        ProductDetailResitory productDetailResitory=(ProductDetailResitory)applicationContext.getBean("productDetailResitory");
+//        CatagoryService catagoryService=(CatagoryService) applicationContext.getBean("catagoryServiceImpl");
+//
+//        ProductDetail productDetail=null;
+//        String categoryId=null;
+//        for (Map.Entry<String, Object> entry:resultItems.getAll().entrySet()){
+//            if (entry.getKey().equals("productDetail")){
+//                productDetail=(ProductDetail) entry.getValue();
+//            }else if(entry.getKey().equals("catagory")){
+//                List<String> cataList=(List<String>) entry.getValue();
+//                for(String cata:cataList){
+//                    List<Category> categorys=catagoryService.findCatagoryByName(cata);
+//                    if (!categorys.isEmpty()){
+//                        categoryId=categorys.get(0).getId();
+//                    }
+//                }
+//                productDetail.setCatagoryId(categoryId);
+//            }
+//        }
+//        productDetailResitory.save(productDetail);
     }
 
 
